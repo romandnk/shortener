@@ -17,6 +17,11 @@ definitions:
       short_url:
         type: string
     type: object
+  urlroute.GetOriginalByAliasResponse:
+    properties:
+      original_url:
+        type: string
+    type: object
 info:
   contact:
     name: API [Roman] Support
@@ -39,7 +44,7 @@ paths:
         schema:
           $ref: '#/definitions/urlroute.CreateShortURLRequest'
       responses:
-        "200":
+        "201":
           description: Short URL was created successfully
           schema:
             $ref: '#/definitions/urlroute.CreateShortURLResponse'
@@ -52,6 +57,31 @@ paths:
           schema:
             $ref: '#/definitions/httpresponse.Response'
       summary: Create short URL
+      tags:
+      - URL
+  /urls/:alias:
+    get:
+      description: Get original URL by its alias.
+      parameters:
+      - description: Required path param with original url alias
+        in: path
+        name: alias
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Short URL was received successfully
+          schema:
+            $ref: '#/definitions/urlroute.GetOriginalByAliasResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/httpresponse.Response'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/httpresponse.Response'
+      summary: Get original URL
       tags:
       - URL
 swagger: "2.0"

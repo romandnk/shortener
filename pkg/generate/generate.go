@@ -2,19 +2,19 @@ package generate
 
 import (
 	"crypto/rand"
+	"github.com/romandnk/shortener/internal/constant"
 	"math/big"
 )
 
 const (
-	stringLength int    = 10
-	alphabet     string = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	alphabet string = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 func Random() (string, error) {
 	charsetLength := big.NewInt(int64(len(alphabet)))
-	result := make([]byte, stringLength)
+	result := make([]byte, constant.AliasLength)
 
-	for i := 0; i < stringLength; i++ {
+	for i := 0; i < constant.AliasLength; i++ {
 		randomIndex, err := rand.Int(rand.Reader, charsetLength)
 		if err != nil {
 			return "", err

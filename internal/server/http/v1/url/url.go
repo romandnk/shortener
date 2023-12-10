@@ -19,6 +19,7 @@ func NewUrlRoutes(g *gin.RouterGroup, url service.URL) {
 	}
 
 	g.POST("/", r.CreateShortURL)
+	g.GET("/:alias", r.GetOriginalByAlias)
 }
 
 // CreateShortURL
@@ -27,7 +28,7 @@ func NewUrlRoutes(g *gin.RouterGroup, url service.URL) {
 //	@Description	Create new short URL from original.
 //	@UUID			100
 //	@Param			params	body		CreateShortURLRequest	true	"Required JSON body with original url"
-//	@Success		200		{object}	CreateShortURLResponse	"Short URL was created successfully"
+//	@Success		201		{object}	CreateShortURLResponse	"Short URL was created successfully"
 //	@Failure		400		{object}	httpresponse.Response	"Invalid input data"
 //	@Failure		500		{object}	httpresponse.Response	"Internal error"
 //	@Router			/urls [post]
@@ -53,4 +54,33 @@ func (r *UrlRoutes) CreateShortURL(ctx *gin.Context) {
 	resp := CreateShortURLResponse{ShortURL: shortURL}
 
 	ctx.JSON(http.StatusCreated, resp)
+}
+
+// GetOriginalByAlias
+//
+//	@Summary		Get original URL
+//	@Description	Get original URL by its alias.
+//	@UUID			101
+//	@Param			alias	path		string						true	"Required path param with original url alias"
+//	@Success		200		{object}	GetOriginalByAliasResponse	"Short URL was received successfully"
+//	@Failure		400		{object}	httpresponse.Response		"Invalid input data"
+//	@Failure		500		{object}	httpresponse.Response		"Internal error"
+//	@Router			/urls/:alias [get]
+//	@Tags			URL
+func (r *UrlRoutes) GetOriginalByAlias(ctx *gin.Context) {
+	alias := ctx.Param("alias")
+
+	original, err := r.url.GetOriginalByAlias(ctx, alias)
+	if err != nil {
+		code := http.StatusBadRequest
+		if errors.Is(err, urlservice.ErrInternalError) {
+			code = http.StatusInternalServerError
+		}
+		httpresponse.SentErrorResponse(ctx, code, "error getting original url by alias", err)
+		return
+	}
+
+	resp := GetOriginalByAliasResponse{OriginalURL: original}
+
+	ctx.JSON(http.StatusOK, resp)
 }

@@ -41,10 +41,48 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Short URL was created successfully",
                         "schema": {
                             "$ref": "#/definitions/urlroute.CreateShortURLResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/httpresponse.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "$ref": "#/definitions/httpresponse.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/urls/:alias": {
+            "get": {
+                "description": "Get original URL by its alias.",
+                "tags": [
+                    "URL"
+                ],
+                "summary": "Get original URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Required path param with original url alias",
+                        "name": "alias",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Short URL was received successfully",
+                        "schema": {
+                            "$ref": "#/definitions/urlroute.GetOriginalByAliasResponse"
                         }
                     },
                     "400": {
@@ -87,6 +125,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "short_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "urlroute.GetOriginalByAliasResponse": {
+            "type": "object",
+            "properties": {
+                "original_url": {
                     "type": "string"
                 }
             }

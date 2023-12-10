@@ -10,7 +10,7 @@ import (
 
 type URL interface {
 	CreateShortURL(ctx context.Context, original string) (string, error)
-	GetShortByOrigin(ctx context.Context, origin string) (string, error)
+	GetOriginalByAlias(ctx context.Context, alias string) (string, error)
 }
 
 type Services struct {

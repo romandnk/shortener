@@ -1,6 +1,7 @@
 package constant
 
-const PathForShortURLV1 string = "/api/v1/urls/"
+// length of short url alias
+const AliasLength int = 10
 
 // db tables
 const (

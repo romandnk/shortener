@@ -1,4 +1,4 @@
-base_url: "http://localhost:8080"
+base_url: "http://localhost:8080/api/v1/urls"
 db_type: "postgres"
 
 zap_logger:

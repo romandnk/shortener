@@ -7,3 +7,7 @@ type CreateShortURLRequest struct {
 type CreateShortURLResponse struct {
 	ShortURL string `json:"short_url"`
 }
+
+type GetOriginalByAliasResponse struct {
+	OriginalURL string `json:"original_url"`
+}

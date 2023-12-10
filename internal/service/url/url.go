@@ -69,11 +69,31 @@ func (s *URLService) CreateShortURL(ctx context.Context, original string) (strin
 
 	s.logger.Info("URLService.CreateShortURL - alias was created successfully")
 
-	shortURL := s.baseURL.JoinPath(constant.PathForShortURLV1 + alias)
+	shortURL := s.baseURL.JoinPath(alias)
 
 	return shortURL.String(), nil
 }
 
-func (s *URLService) GetShortByOrigin(ctx context.Context, origin string) (string, error) {
-	return "", nil
+func (s *URLService) GetOriginalByAlias(ctx context.Context, alias string) (string, error) {
+	alias = strings.TrimSpace(alias)
+	if alias == "" {
+		s.logger.Error("URLService.GetOriginalByAlias", zap.String("error", ErrEmptyURLAlias.Error()))
+		return "", ErrEmptyURLAlias
+	}
+
+	if utf8.RuneCountInString(alias) != constant.AliasLength {
+		s.logger.Error("URLService.GetOriginalByAlias", zap.String("error", ErrInvalidAliasFormat.Error()))
+		return "", ErrInvalidAliasFormat
+	}
+
+	original, err := s.url.GetOriginalByAlias(ctx, alias)
+	if err != nil {
+		if errors.Is(err, storageerrors.ErrURLAliasNotFound) {
+			return "", ErrOriginalURLNotFound
+		}
+		s.logger.Error("URLService.GetOriginalByAlias - s.url.GetOriginalByAlias", zap.String("error", err.Error()))
+		return "", ErrInternalError
+	}
+
+	return original, nil
 }

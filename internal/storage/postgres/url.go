@@ -59,9 +59,9 @@ func (r *URLRepo) GetOriginalByAlias(ctx context.Context, alias string) (string,
 	err := r.Pool.QueryRow(ctx, sql, args...).Scan(&original)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return original, storageerrors.ErrShortNotFound
+			return original, storageerrors.ErrURLAliasNotFound
 		}
-		return original, fmt.Errorf("URLRepo.GetShortByFull - r.Pool.Query: %v", err)
+		return original, fmt.Errorf("URLRepo.GetOriginalByAlias - r.Pool.Query: %v", err)
 	}
 
 	return original, nil
