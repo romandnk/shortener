@@ -11,6 +11,7 @@ import (
 	"github.com/romandnk/shortener/internal/storage"
 	zaplogger "github.com/romandnk/shortener/pkg/logger/zap"
 	"github.com/romandnk/shortener/pkg/storage/postgres"
+	"github.com/romandnk/shortener/pkg/storage/redis"
 	"go.uber.org/zap"
 	"log"
 	"log/slog"
@@ -64,7 +65,6 @@ func Run() {
 	case constant.POSTGRES:
 		pg, err := postgres.New(ctx, cfg.Postgres)
 		if err != nil {
-			pg.Pool.Close()
 			logger.Fatal("error initializing postgres db", zap.Error(err))
 		}
 		defer pg.Pool.Close()
@@ -79,22 +79,21 @@ func Run() {
 			zap.Int("port", cfg.Postgres.Port),
 		)
 	case constant.REDIS:
-		//r, err := redis.New(ctx, cfg.Redis)
-		//if err != nil {
-		//	r.Close()
-		//	logger.Fatal("error initializing redis db", zap.Error(err))
-		//}
-		//defer r.Close()
-		//st, err = storage.NewStorage(r)
-		//if err != nil {
-		//	r.Close()
-		//	logger.Fatal("error creating storage", zap.Error(err))
-		//}
+		r, err := redis.New(ctx, cfg.Redis)
+		if err != nil {
+			logger.Fatal("error initializing redis db", zap.Error(err))
+		}
+		defer r.Close()
+		st, err = storage.NewStorage(r)
+		if err != nil {
+			r.Close()
+			logger.Fatal("error creating storage", zap.Error(err))
+		}
 
-		//logger.Info("using redis storage",
-		//	zap.String("host", cfg.Redis.Host),
-		//	zap.Int("port", cfg.Redis.Port),
-		//)
+		logger.Info("using redis storage",
+			zap.String("host", cfg.Redis.Host),
+			zap.Int("port", cfg.Redis.Port),
+		)
 	default:
 		logger.Fatal("invalid db type", zap.String("db type", cfg.DBType))
 	}

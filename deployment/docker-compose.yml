@@ -28,6 +28,17 @@ services:
     networks:
       url-shortener-network:
 
+  redis:
+    ports:
+      - "6379:6379"
+    image: redis:7
+    env_file:
+      - ../config/.env
+    restart: always
+    command: /bin/sh -c "redis-server --save 20 1 --requirepass $$REDIS_PASSWORD --maxmemory-policy allkeys-lru"
+    networks:
+      url-shortener-network:
+
   app:
     ports:
       - "8080:8080"

@@ -26,20 +26,20 @@ type ZapLogger struct {
 }
 
 type Postgres struct {
-	Host     string `env:"POSTGRES_HOST" env-required:"true"`
-	Port     int    `env:"POSTGRES_PORT" env-required:"true"`
-	User     string `env:"POSTGRES_USER" env-required:"true"`
-	Password string `env:"POSTGRES_PASSWORD" env-required:"true"`
-	DBName   string `env:"POSTGRES_DB" env-required:"true"`
-	SSLMode  string `yaml:"ssl_mode" env:"POSTGRES_SSLMODE" env-required:"true"`
+	Host     string `env:"POSTGRES_HOST"`
+	Port     int    `env:"POSTGRES_PORT"`
+	User     string `env:"POSTGRES_USER"`
+	Password string `env:"POSTGRES_PASSWORD"`
+	DBName   string `env:"POSTGRES_DB"`
+	SSLMode  string `yaml:"ssl_mode" env:"POSTGRES_SSLMODE"`
 	MaxConns int32  `yaml:"max_conns"`
 	MinConns int32  `yaml:"min_conns"`
 }
 
 type Redis struct {
-	//Host     string `env:"REDIS_HOST" env-required:"true"`
-	//Port     int    `env:"REDIS_PORT" env-required:"true"`
-	//Password string `env:"REDIS_PASSWORD" env-required:"true"`
+	Host     string `env:"REDIS_HOST"`
+	Port     int    `env:"REDIS_PORT"`
+	Password string `env:"REDIS_PASSWORD"`
 }
 
 type HTTPServer struct {
