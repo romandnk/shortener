@@ -1,6 +1,8 @@
 package main
 
-import "app/internal/app"
+import (
+	"github.com/romandnk/shortener/internal/app"
+)
 
 func main() {
 	app.Run()

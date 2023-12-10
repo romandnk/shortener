@@ -1,0 +1,57 @@
+basePath: /api/v1/
+definitions:
+  httpresponse.Response:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  urlroute.CreateShortURLRequest:
+    properties:
+      original_url:
+        type: string
+    type: object
+  urlroute.CreateShortURLResponse:
+    properties:
+      short_url:
+        type: string
+    type: object
+info:
+  contact:
+    name: API [Roman] Support
+  description: Swagger API for Golang Project URL Shortener.
+  license:
+    name: romandnk
+    url: https://github.com/romandnk/shortener
+  termsOfService: http://swagger.io/terms/
+  title: URL shortener project
+  version: "1.0"
+paths:
+  /urls:
+    post:
+      description: Create new short URL from original.
+      parameters:
+      - description: Required JSON body with original url
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/urlroute.CreateShortURLRequest'
+      responses:
+        "200":
+          description: Short URL was created successfully
+          schema:
+            $ref: '#/definitions/urlroute.CreateShortURLResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/httpresponse.Response'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/httpresponse.Response'
+      summary: Create short URL
+      tags:
+      - URL
+swagger: "2.0"
