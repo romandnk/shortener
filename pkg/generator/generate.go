@@ -1,8 +1,9 @@
-package generate
+package generator
+
+//go:generate mockgen -source=generate.go -destination=mock/mock.go generate
 
 import (
 	"crypto/rand"
-	"github.com/romandnk/shortener/internal/constant"
 	"math/big"
 )
 
@@ -10,11 +11,23 @@ const (
 	alphabet string = "_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func Random() (string, error) {
-	charsetLength := big.NewInt(int64(len(alphabet)))
-	result := make([]byte, constant.AliasLength)
+type Generator interface {
+	Random() (string, error)
+}
 
-	for i := 0; i < constant.AliasLength; i++ {
+type Gen struct {
+	Length int
+}
+
+func NewGen(length int) *Gen {
+	return &Gen{Length: length}
+}
+
+func (g *Gen) Random() (string, error) {
+	charsetLength := big.NewInt(int64(len(alphabet)))
+	result := make([]byte, g.Length)
+
+	for i := 0; i < g.Length; i++ {
 		randomIndex, err := rand.Int(rand.Reader, charsetLength)
 		if err != nil {
 			return "", err

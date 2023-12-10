@@ -26,7 +26,7 @@ func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 	sql, args, _ := r.Builder.
 		Insert(constant.URLSTable).
 		Columns("original", "alias").
-		Values(url.Origin, url.Alias).
+		Values(url.Original, url.Alias).
 		ToSql()
 
 	_, err := r.Pool.Exec(ctx, sql, args...)
@@ -34,10 +34,10 @@ func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 		var pgErr *pgconn.PgError
 		if ok := errors.As(err, &pgErr); ok {
 			if pgErr.Code == "23505" {
-				if strings.Contains(pgErr.Detail, "original") {
+				if strings.Contains(pgErr.Detail, "Key (original)") {
 					return storageerrors.ErrOriginalURLExists
 				}
-				if strings.Contains(pgErr.Detail, "alias") {
+				if strings.Contains(pgErr.Detail, "Key (alias)") {
 					return storageerrors.ErrURLAliasExists
 				}
 			}

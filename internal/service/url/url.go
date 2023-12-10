@@ -7,7 +7,7 @@ import (
 	"github.com/romandnk/shortener/internal/entity"
 	"github.com/romandnk/shortener/internal/storage"
 	storageerrors "github.com/romandnk/shortener/internal/storage/errors"
-	"github.com/romandnk/shortener/pkg/generate"
+	"github.com/romandnk/shortener/pkg/generator"
 	"github.com/romandnk/shortener/pkg/logger"
 	"go.uber.org/zap"
 	"net/url"
@@ -16,16 +16,18 @@ import (
 )
 
 type URLService struct {
-	baseURL url.URL
-	url     storage.URL
-	logger  logger.Logger
+	generator generator.Generator
+	baseURL   url.URL
+	url       storage.URL
+	logger    logger.Logger
 }
 
-func NewURLService(baseURL url.URL, url storage.URL, logger logger.Logger) *URLService {
+func NewURLService(generator generator.Generator, baseURL url.URL, url storage.URL, logger logger.Logger) *URLService {
 	return &URLService{
-		baseURL: baseURL,
-		url:     url,
-		logger:  logger,
+		generator: generator,
+		baseURL:   baseURL,
+		url:       url,
+		logger:    logger,
 	}
 }
 
@@ -43,31 +45,36 @@ func (s *URLService) CreateShortURL(ctx context.Context, original string) (strin
 
 	_, err := url.ParseRequestURI(original)
 	if err != nil {
-		s.logger.Error("URLService.CreateShortURL", zap.String("error", err.Error()))
+		s.logger.Error("URLService.CreateShortURL", zap.String("original", original), zap.String("error", err.Error()))
 		return "", ErrInvalidOriginalURL
 	}
 
-	alias, err := generate.Random()
+	alias, err := s.generator.Random()
 	if err != nil {
-		s.logger.Error("URLService.CreateShortURL - generate.Random()", zap.String("error", err.Error()))
+		s.logger.Error("URLService.CreateShortURL - s.generator.Random()", zap.String("error", err.Error()))
 		return "", ErrInternalError
 	}
 
 	URL := entity.URL{
-		Origin: original,
-		Alias:  alias,
+		Original: original,
+		Alias:    alias,
 	}
 
 	err = s.url.CreateURL(ctx, URL)
 	if err != nil {
-		if errors.Is(err, storageerrors.ErrOriginalURLExists) || errors.Is(err, storageerrors.ErrURLAliasExists) {
+		if errors.Is(err, storageerrors.ErrOriginalURLExists) {
+			s.logger.Error("URLService.CreateShortURL", zap.String("original", original), zap.String("error", err.Error()))
+			return "", err
+		}
+		if errors.Is(err, storageerrors.ErrURLAliasExists) {
+			s.logger.Error("URLService.CreateShortURL", zap.String("alias", alias), zap.String("error", err.Error()))
 			return "", err
 		}
 		s.logger.Error("URLService.CreateShortURL - s.url.CreateURL", zap.String("error", err.Error()))
 		return "", ErrInternalError
 	}
 
-	s.logger.Info("URLService.CreateShortURL - alias was created successfully")
+	s.logger.Info("URLService.CreateShortURL - alias was created successfully", zap.String("alias", alias))
 
 	shortURL := s.baseURL.JoinPath(alias)
 
@@ -89,11 +96,14 @@ func (s *URLService) GetOriginalByAlias(ctx context.Context, alias string) (stri
 	original, err := s.url.GetOriginalByAlias(ctx, alias)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrURLAliasNotFound) {
+			s.logger.Error("URLService.GetOriginalByAlias", zap.String("alias", alias), zap.String("error", err.Error()))
 			return "", ErrOriginalURLNotFound
 		}
 		s.logger.Error("URLService.GetOriginalByAlias - s.url.GetOriginalByAlias", zap.String("error", err.Error()))
 		return "", ErrInternalError
 	}
+
+	s.logger.Info("URLService.GetOriginalByAlias - alias was received successfully", zap.String("alias", alias))
 
 	return original, nil
 }

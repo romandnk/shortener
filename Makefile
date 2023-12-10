@@ -7,7 +7,8 @@ run:
 
 stop:
 	docker compose -f ./deployment/docker-compose.yml down && \
-	docker volume rm url-shortener-volume-postgres
+	docker volume rm url-shortener-volume-postgres && \
+    docker volume rm url-shortener-volume-redis
 
 test:
 	go test -race ./internal/...

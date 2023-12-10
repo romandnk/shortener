@@ -36,6 +36,8 @@ services:
       - ../config/.env
     restart: always
     command: /bin/sh -c "redis-server --save 20 1 --requirepass $$REDIS_PASSWORD --maxmemory-policy allkeys-lru"
+    volumes:
+      - redis:/data
     networks:
       url-shortener-network:
 
@@ -64,6 +66,9 @@ services:
 volumes:
   postgres:
     name: url-shortener-volume-postgres
+    driver: local
+  redis:
+    name: url-shortener-volume-redis
     driver: local
 
 networks:

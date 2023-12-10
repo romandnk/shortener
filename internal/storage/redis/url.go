@@ -20,7 +20,7 @@ func NewURLRepo(client *redis.Client) *URLRepo {
 
 func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 	err := r.client.Watch(ctx, func(tx *redis.Tx) error {
-		originExists, err := tx.SetNX(ctx, url.Origin, url.Alias, constant.ZeroTTL).Result()
+		originExists, err := tx.SetNX(ctx, url.Original, url.Alias, constant.ZeroTTL).Result()
 		if err != nil {
 			return fmt.Errorf("URLRepo.CreateURL - tx.SetNX - 1: %v", err)
 		}
@@ -28,7 +28,7 @@ func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 			return storageerrors.ErrOriginalURLExists
 		}
 
-		aliasExists, err := tx.SetNX(ctx, url.Alias, url.Origin, constant.ZeroTTL).Result()
+		aliasExists, err := tx.SetNX(ctx, url.Alias, url.Original, constant.ZeroTTL).Result()
 		if err != nil {
 			return fmt.Errorf("URLRepo.CreateURL - tx.SetNX - 2: %v", err)
 		}

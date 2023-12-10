@@ -9,6 +9,7 @@ import (
 	v1 "github.com/romandnk/shortener/internal/server/http/v1"
 	"github.com/romandnk/shortener/internal/service"
 	"github.com/romandnk/shortener/internal/storage"
+	"github.com/romandnk/shortener/pkg/generator"
 	zaplogger "github.com/romandnk/shortener/pkg/logger/zap"
 	"github.com/romandnk/shortener/pkg/storage/postgres"
 	"github.com/romandnk/shortener/pkg/storage/redis"
@@ -100,9 +101,10 @@ func Run() {
 
 	// initializing services
 	dep := service.Dependencies{
-		BaseURL: *baseURL,
-		Repo:    st,
-		Logger:  logger,
+		Generator: generator.NewGen(constant.AliasLength),
+		BaseURL:   *baseURL,
+		Repo:      st,
+		Logger:    logger,
 	}
 	services := service.NewServices(dep)
 
