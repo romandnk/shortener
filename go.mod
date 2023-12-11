@@ -5,6 +5,7 @@ go 1.21.3
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.5.0
 	github.com/pashagolub/pgxmock/v3 v3.2.0
