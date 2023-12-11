@@ -19,7 +19,7 @@ func NewURLHandler(url service.URL) *URLHandler {
 	return &URLHandler{url: url}
 }
 
-func (h *URLHandler) CreateURLAlias(ctx context.Context, req *urlpb.CreateURLAliasRequest) (*urlpb.CreateURLAliasResponse, error) {
+func (h URLHandler) CreateURLAlias(ctx context.Context, req *urlpb.CreateURLAliasRequest) (*urlpb.CreateURLAliasResponse, error) {
 	alias, err := h.url.CreateURLAlias(ctx, req.GetOriginal())
 	if err != nil {
 		code := codes.InvalidArgument
@@ -33,7 +33,7 @@ func (h *URLHandler) CreateURLAlias(ctx context.Context, req *urlpb.CreateURLAli
 	}, nil
 }
 
-func (h *URLHandler) GetOriginalByAlias(ctx context.Context, req *urlpb.GetOriginalByAliasRequest) (*urlpb.GetOriginalByAliasResponse, error) {
+func (h URLHandler) GetOriginalByAlias(ctx context.Context, req *urlpb.GetOriginalByAliasRequest) (*urlpb.GetOriginalByAliasResponse, error) {
 	original, err := h.url.GetOriginalByAlias(ctx, req.GetAlias())
 	if err != nil {
 		code := codes.InvalidArgument

@@ -79,7 +79,7 @@ func TestUrlRoutes_CreateURLAlias(t *testing.T) {
 			expectedHTTPCode:     http.StatusBadRequest,
 		},
 		{
-			name: "invalid original url format",
+			name: "original url exists",
 			argsUrl: argsUrl{
 				input:         "http://google.com",
 				expectedError: storageerrors.ErrOriginalURLExists,
@@ -179,7 +179,7 @@ func TestUrlRoutes_GetOriginalByAlias(t *testing.T) {
 			expectedHTTPCode:     http.StatusBadRequest,
 		},
 		{
-			name: "too short alias",
+			name: "original url is not found",
 			argsUrl: argsAlias{
 				input:         "testtest12",
 				expectedError: urlservice.ErrOriginalURLNotFound,
