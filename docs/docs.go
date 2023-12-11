@@ -72,7 +72,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Required path param with original url alias",
+                        "description": "Required path param with url alias",
                         "name": "alias",
                         "in": "path",
                         "required": true
@@ -80,7 +80,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Short URL was received successfully",
+                        "description": "Original URL was received successfully",
                         "schema": {
                             "$ref": "#/definitions/urlroute.GetOriginalByAliasResponse"
                         }

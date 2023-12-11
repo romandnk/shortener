@@ -61,8 +61,8 @@ func (r *UrlRoutes) CreateURLAlias(ctx *gin.Context) {
 //	@Summary		Get original URL
 //	@Description	Get original URL by its alias.
 //	@UUID			101
-//	@Param			alias	path		string						true	"Required path param with original url alias"
-//	@Success		200		{object}	GetOriginalByAliasResponse	"Short URL was received successfully"
+//	@Param			alias	path		string						true	"Required path param with url alias"
+//	@Success		200		{object}	GetOriginalByAliasResponse	"Original URL was received successfully"
 //	@Failure		400		{object}	httpresponse.Response		"Invalid input data"
 //	@Failure		500		{object}	httpresponse.Response		"Internal error"
 //	@Router			/urls/:alias [get]
