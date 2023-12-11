@@ -7,14 +7,14 @@ definitions:
       message:
         type: string
     type: object
-  urlroute.CreateShortURLRequest:
+  urlroute.CreateURLAliasRequest:
     properties:
       original_url:
         type: string
     type: object
-  urlroute.CreateShortURLResponse:
+  urlroute.CreateURLAliasResponse:
     properties:
-      short_url:
+      alias:
         type: string
     type: object
   urlroute.GetOriginalByAliasResponse:
@@ -35,19 +35,19 @@ info:
 paths:
   /urls:
     post:
-      description: Create new short URL from original.
+      description: Create short new URL alias if not exists.
       parameters:
       - description: Required JSON body with original url
         in: body
         name: params
         required: true
         schema:
-          $ref: '#/definitions/urlroute.CreateShortURLRequest'
+          $ref: '#/definitions/urlroute.CreateURLAliasRequest'
       responses:
         "201":
-          description: Short URL was created successfully
+          description: URL alias was created successfully
           schema:
-            $ref: '#/definitions/urlroute.CreateShortURLResponse'
+            $ref: '#/definitions/urlroute.CreateURLAliasResponse'
         "400":
           description: Invalid input data
           schema:
@@ -56,7 +56,7 @@ paths:
           description: Internal error
           schema:
             $ref: '#/definitions/httpresponse.Response'
-      summary: Create short URL
+      summary: Create short URL alias
       tags:
       - URL
   /urls/:alias:

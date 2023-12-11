@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/romandnk/shortener/config"
 	"github.com/romandnk/shortener/internal/constant"
+	"github.com/romandnk/shortener/internal/server/grpc"
 	"github.com/romandnk/shortener/internal/server/http"
 	"github.com/romandnk/shortener/internal/server/http/middleware"
 	v1 "github.com/romandnk/shortener/internal/server/http/v1"
@@ -15,11 +16,10 @@ import (
 	"github.com/romandnk/shortener/pkg/storage/redis"
 	"go.uber.org/zap"
 	"log"
-	"log/slog"
 	"net"
-	"net/url"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 )
 
@@ -46,10 +46,6 @@ func Run() {
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Fatalf("error reading config file: %s", err.Error())
-	}
-	baseURL, err := url.ParseRequestURI(cfg.BaseURL)
-	if err != nil {
-		log.Fatalf("error parsing base url: %s", err.Error())
 	}
 
 	// initializing zap logger
@@ -102,7 +98,6 @@ func Run() {
 	// initializing services
 	dep := service.Dependencies{
 		Generator: generator.NewGen(constant.AliasLength),
-		BaseURL:   *baseURL,
 		Repo:      st,
 		Logger:    logger,
 	}
@@ -111,11 +106,13 @@ func Run() {
 	// initializing middlewares
 	mw := middleware.New(logger)
 
-	// initializing handler
-	handler := v1.NewHandler(services, mw)
+	// initializing handlers
+	HTTPHandler := v1.NewHandler(services, mw)
+	GRPCHandler := grpc.NewHandlerGRPC(services, logger)
 
-	// initializing http server
-	HTTPServer := http.NewServer(cfg.HTTPServer, handler.InitRoutes())
+	// initializing servers
+	HTTPServer := http.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes())
+	GRPCServer := grpc.NewServerGRPC(GRPCHandler, logger, cfg.GRPCServer)
 
 	go func() {
 		<-ctx.Done()
@@ -127,14 +124,31 @@ func Run() {
 			)
 		}
 
+		GRPCServer.Stop()
+
 		logger.Info("app is stopped")
 	}()
 
-	logger.Info("app is running...",
-		zap.String("address http", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
+	var wg sync.WaitGroup
 
-	if err := HTTPServer.Start(); err != nil {
-		logger.Error("error starting HTTP server",
-			slog.String("address", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
-	}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		logger.Info("http server is running...",
+			zap.String("address", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
+		if err := HTTPServer.Start(); err != nil {
+			logger.Error("error starting HTTP server",
+				zap.String("address", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		logger.Info("grpc server is running...",
+			zap.String("address", net.JoinHostPort(cfg.GRPCServer.Host, strconv.Itoa(cfg.GRPCServer.Port))))
+		if err := GRPCServer.Start(); err != nil {
+			logger.Error("error starting GRPC server",
+				zap.String("address", net.JoinHostPort(cfg.GRPCServer.Host, strconv.Itoa(cfg.GRPCServer.Port))))
+		}
+	}()
+	wg.Wait()
 }

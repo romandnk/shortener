@@ -1,11 +1,11 @@
 package urlroute
 
-type CreateShortURLRequest struct {
+type CreateURLAliasRequest struct {
 	OriginalURL string `json:"original_url"`
 }
 
-type CreateShortURLResponse struct {
-	ShortURL string `json:"short_url"`
+type CreateURLAliasResponse struct {
+	Alias string `json:"alias"`
 }
 
 type GetOriginalByAliasResponse struct {

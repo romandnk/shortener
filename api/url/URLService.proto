@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package url;
+option go_package = "./;url_pb";
+
+service EventService {
+  rpc CreateURLAlias(CreateURLAliasRequest) returns (CreateURLAliasResponse);
+  rpc GetOriginalByAlias(GetOriginalByAliasRequest) returns (GetOriginalByAliasResponse);
+}
+
+message CreateURLAliasRequest {
+  string original = 1;
+}
+
+message CreateURLAliasResponse {
+  string alias = 1;
+}
+
+message GetOriginalByAliasRequest {
+  string alias = 1;
+}
+
+message GetOriginalByAliasResponse {
+  string original = 1;
+}

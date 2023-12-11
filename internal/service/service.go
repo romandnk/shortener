@@ -8,11 +8,10 @@ import (
 	"github.com/romandnk/shortener/internal/storage"
 	"github.com/romandnk/shortener/pkg/generator"
 	"github.com/romandnk/shortener/pkg/logger"
-	"net/url"
 )
 
 type URL interface {
-	CreateShortURL(ctx context.Context, original string) (string, error)
+	CreateURLAlias(ctx context.Context, original string) (string, error)
 	GetOriginalByAlias(ctx context.Context, alias string) (string, error)
 }
 
@@ -22,13 +21,12 @@ type Services struct {
 
 type Dependencies struct {
 	Generator generator.Generator
-	BaseURL   url.URL
 	Repo      *storage.Storage
 	Logger    logger.Logger
 }
 
 func NewServices(dep Dependencies) *Services {
 	return &Services{
-		URL: urlservice.NewURLService(dep.Generator, dep.BaseURL, dep.Repo.URL, dep.Logger),
+		URL: urlservice.NewURLService(dep.Generator, dep.Repo.URL, dep.Logger),
 	}
 }

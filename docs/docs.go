@@ -24,11 +24,11 @@ const docTemplate = `{
     "paths": {
         "/urls": {
             "post": {
-                "description": "Create new short URL from original.",
+                "description": "Create short new URL alias if not exists.",
                 "tags": [
                     "URL"
                 ],
-                "summary": "Create short URL",
+                "summary": "Create short URL alias",
                 "parameters": [
                     {
                         "description": "Required JSON body with original url",
@@ -36,15 +36,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/urlroute.CreateShortURLRequest"
+                            "$ref": "#/definitions/urlroute.CreateURLAliasRequest"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Short URL was created successfully",
+                        "description": "URL alias was created successfully",
                         "schema": {
-                            "$ref": "#/definitions/urlroute.CreateShortURLResponse"
+                            "$ref": "#/definitions/urlroute.CreateURLAliasResponse"
                         }
                     },
                     "400": {
@@ -113,7 +113,7 @@ const docTemplate = `{
                 }
             }
         },
-        "urlroute.CreateShortURLRequest": {
+        "urlroute.CreateURLAliasRequest": {
             "type": "object",
             "properties": {
                 "original_url": {
@@ -121,10 +121,10 @@ const docTemplate = `{
                 }
             }
         },
-        "urlroute.CreateShortURLResponse": {
+        "urlroute.CreateURLAliasResponse": {
             "type": "object",
             "properties": {
-                "short_url": {
+                "alias": {
                     "type": "string"
                 }
             }

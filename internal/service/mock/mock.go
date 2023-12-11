@@ -38,19 +38,19 @@ func (m *MockURL) EXPECT() *MockURLMockRecorder {
 	return m.recorder
 }
 
-// CreateShortURL mocks base method.
-func (m *MockURL) CreateShortURL(ctx context.Context, original string) (string, error) {
+// CreateURLAlias mocks base method.
+func (m *MockURL) CreateURLAlias(ctx context.Context, original string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateShortURL", ctx, original)
+	ret := m.ctrl.Call(m, "CreateURLAlias", ctx, original)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateShortURL indicates an expected call of CreateShortURL.
-func (mr *MockURLMockRecorder) CreateShortURL(ctx, original any) *gomock.Call {
+// CreateURLAlias indicates an expected call of CreateURLAlias.
+func (mr *MockURLMockRecorder) CreateURLAlias(ctx, original any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateShortURL", reflect.TypeOf((*MockURL)(nil).CreateShortURL), ctx, original)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLAlias", reflect.TypeOf((*MockURL)(nil).CreateURLAlias), ctx, original)
 }
 
 // GetOriginalByAlias mocks base method.

@@ -42,7 +42,7 @@ func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 				}
 			}
 		}
-		return fmt.Errorf("URLRepo.CreateShortURL - r.Pool.Exec: %v", err)
+		return fmt.Errorf("URLRepo.CreateURLAlias - r.Pool.Exec: %v", err)
 	}
 
 	return nil

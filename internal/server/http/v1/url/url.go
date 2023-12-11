@@ -18,30 +18,30 @@ func NewUrlRoutes(g *gin.RouterGroup, url service.URL) {
 		url: url,
 	}
 
-	g.POST("/", r.CreateShortURL)
+	g.POST("/", r.CreateURLAlias)
 	g.GET("/:alias", r.GetOriginalByAlias)
 }
 
-// CreateShortURL
+// CreateURLAlias
 //
-//	@Summary		Create short URL
-//	@Description	Create new short URL from original.
+//	@Summary		Create short URL alias
+//	@Description	Create short new URL alias if not exists.
 //	@UUID			100
-//	@Param			params	body		CreateShortURLRequest	true	"Required JSON body with original url"
-//	@Success		201		{object}	CreateShortURLResponse	"Short URL was created successfully"
+//	@Param			params	body		CreateURLAliasRequest	true	"Required JSON body with original url"
+//	@Success		201		{object}	CreateURLAliasResponse	"URL alias was created successfully"
 //	@Failure		400		{object}	httpresponse.Response	"Invalid input data"
 //	@Failure		500		{object}	httpresponse.Response	"Internal error"
 //	@Router			/urls [post]
 //	@Tags			URL
-func (r *UrlRoutes) CreateShortURL(ctx *gin.Context) {
-	var params CreateShortURLRequest
+func (r *UrlRoutes) CreateURLAlias(ctx *gin.Context) {
+	var params CreateURLAliasRequest
 
 	if err := ctx.BindJSON(&params); err != nil {
 		httpresponse.SentErrorResponse(ctx, http.StatusBadRequest, "error binding json body", err)
 		return
 	}
 
-	shortURL, err := r.url.CreateShortURL(ctx, params.OriginalURL)
+	alias, err := r.url.CreateURLAlias(ctx, params.OriginalURL)
 	if err != nil {
 		code := http.StatusBadRequest
 		if errors.Is(err, urlservice.ErrInternalError) {
@@ -51,7 +51,7 @@ func (r *UrlRoutes) CreateShortURL(ctx *gin.Context) {
 		return
 	}
 
-	resp := CreateShortURLResponse{ShortURL: shortURL}
+	resp := CreateURLAliasResponse{Alias: alias}
 
 	ctx.JSON(http.StatusCreated, resp)
 }

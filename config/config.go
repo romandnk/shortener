@@ -14,7 +14,7 @@ type Config struct {
 	Postgres   Postgres   `yaml:"postgres"`
 	Redis      Redis      `yaml:"redis"`
 	HTTPServer HTTPServer `yaml:"http_server"`
-	BaseURL    string     `yaml:"base_url"`
+	GRPCServer GRPCServer `yaml:"grpc_server"`
 	DBType     string     `yaml:"db_type"`
 }
 
@@ -48,6 +48,15 @@ type HTTPServer struct {
 	ReadTimeout     time.Duration `yaml:"read_timeout" env-default:"3s"`
 	WriteTimeout    time.Duration `yaml:"write_timeout" env-default:"5s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"5s"`
+}
+
+type GRPCServer struct {
+	Host              string        `env:"GRPC_SERVER_HOST" env-required:"true"`
+	Port              int           `env:"GRPC_SERVER_PORT" env-required:"true"`
+	MaxConnectionIdle time.Duration `yaml:"max_connection_idle"`
+	MaxConnectionAge  time.Duration `yaml:"max_connection_age"`
+	Time              time.Duration `yaml:"time"`
+	Timeout           time.Duration `yaml:"timeout"`
 }
 
 func NewConfig() (*Config, error) {

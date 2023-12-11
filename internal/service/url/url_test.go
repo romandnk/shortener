@@ -10,14 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"net/url"
 	"testing"
 )
 
-func TestURLService_CreateShortURL(t *testing.T) {
-	u, err := url.ParseRequestURI("http://localhost:9090/api/v1/")
-	require.NoError(t, err)
-
+func TestURLService_CreateURLAlias(t *testing.T) {
 	type loggerArgs struct {
 		msg  string
 		args []any
@@ -47,14 +43,14 @@ func TestURLService_CreateShortURL(t *testing.T) {
 		generatorArgs      generatorArgs
 		generatorBehaviour generatorBehaviour
 		urlMock            repoBehaviour
-		expectedShort      string
+		expectedAlias      string
 		expectedError      error
 	}{
 		{
 			name:          "OK",
 			inputOriginal: "http://google.com/",
 			loggerArgs: loggerArgs{
-				msg:  "URLService.CreateShortURL - alias was created successfully",
+				msg:  "URLService.CreateURLAlias - alias was created successfully",
 				args: []any{zap.String("alias", "abcdefghig")},
 			},
 			loggerMock: func(m *mock_logger.MockLogger, args loggerArgs) {
@@ -76,38 +72,38 @@ func TestURLService_CreateShortURL(t *testing.T) {
 			urlMock: func(m *mock_storage.MockURL, args urlArgs) {
 				m.EXPECT().CreateURL(args.ctx, args.url).Return(args.error)
 			},
-			expectedShort: "http://localhost:9090/api/v1/abcdefghig",
+			expectedAlias: "abcdefghig",
 		},
 		{
 			name: "empty original url",
 			loggerArgs: loggerArgs{
-				msg:  "URLService.CreateShortURL",
+				msg:  "URLService.CreateURLAlias",
 				args: []any{zap.String("error", ErrEmptyOriginalURL.Error())},
 			},
 			loggerMock: func(m *mock_logger.MockLogger, args loggerArgs) {
 				m.EXPECT().Error(args.msg, args.args)
 			},
-			expectedShort: "",
+			expectedAlias: "",
 			expectedError: ErrEmptyOriginalURL,
 		},
 		{
 			name:          "original url too long",
 			inputOriginal: string(make([]byte, 3000)),
 			loggerArgs: loggerArgs{
-				msg:  "URLService.CreateShortURL",
+				msg:  "URLService.CreateURLAlias",
 				args: []any{zap.String("error", ErrOriginalURLTooLong.Error())},
 			},
 			loggerMock: func(m *mock_logger.MockLogger, args loggerArgs) {
 				m.EXPECT().Error(args.msg, args.args)
 			},
-			expectedShort: "",
+			expectedAlias: "",
 			expectedError: ErrOriginalURLTooLong,
 		},
 		{
 			name:          "original url already exists",
 			inputOriginal: "http://google.com/",
 			loggerArgs: loggerArgs{
-				msg: "URLService.CreateShortURL",
+				msg: "URLService.CreateURLAlias",
 				args: []any{
 					zap.String("original", "http://google.com/"),
 					zap.String("error", storageerrors.ErrOriginalURLExists.Error()),
@@ -133,7 +129,7 @@ func TestURLService_CreateShortURL(t *testing.T) {
 			urlMock: func(m *mock_storage.MockURL, args urlArgs) {
 				m.EXPECT().CreateURL(args.ctx, args.url).Return(args.error)
 			},
-			expectedShort: "",
+			expectedAlias: "",
 			expectedError: storageerrors.ErrOriginalURLExists,
 		},
 	}
@@ -152,7 +148,6 @@ func TestURLService_CreateShortURL(t *testing.T) {
 
 			urlService := URLService{
 				generator: generator,
-				baseURL:   *u,
 				url:       urlStorage,
 				logger:    log,
 			}
@@ -167,9 +162,9 @@ func TestURLService_CreateShortURL(t *testing.T) {
 				tc.urlMock(urlStorage, tc.urlArgs)
 			}
 
-			output, err := urlService.CreateShortURL(ctx, tc.inputOriginal)
+			output, err := urlService.CreateURLAlias(ctx, tc.inputOriginal)
 			require.ErrorIs(t, err, tc.expectedError)
-			require.Equal(t, tc.expectedShort, output)
+			require.Equal(t, tc.expectedAlias, output)
 		})
 	}
 }
