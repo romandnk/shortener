@@ -1,18 +1,24 @@
 package zaplogger
 
 import (
-	"github.com/romandnk/shortener/config"
 	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+type Config struct {
+	Test             bool     `yaml:"test"`
+	Level            string   `yaml:"level"`
+	OutputPaths      []string `yaml:"output_paths"`
+	ErrorOutputPaths []string `yaml:"error_output_paths"`
+}
+
 type Logger struct {
 	logger *zap.Logger
 }
 
-func NewLogger(cfg config.ZapLogger) (*Logger, error) {
+func NewLogger(cfg Config) (*Logger, error) {
 	var (
 		err error
 		c   *zap.Config
@@ -38,7 +44,7 @@ func NewLogger(cfg config.ZapLogger) (*Logger, error) {
 	return &Logger{logger: logger}, nil
 }
 
-func devCfg(cfg config.ZapLogger) (*zap.Config, error) {
+func devCfg(cfg Config) (*zap.Config, error) {
 	lvl, err := zap.ParseAtomicLevel(cfg.Level)
 	if err != nil {
 		return nil, err
@@ -64,7 +70,7 @@ func devCfg(cfg config.ZapLogger) (*zap.Config, error) {
 	}, nil
 }
 
-func prodCfg(cfg config.ZapLogger) *zap.Config {
+func prodCfg(cfg Config) *zap.Config {
 	return &zap.Config{
 		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
 		Encoding:         "json",

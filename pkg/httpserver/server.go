@@ -1,19 +1,27 @@
-package http
+package httpserver
 
 import (
 	"context"
-	"github.com/romandnk/shortener/config"
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+type Config struct {
+	Host            string        `env:"HTTP_SERVER_HOST" env-required:"true"`
+	Port            int           `env:"HTTP_SERVER_PORT" env-required:"true"`
+	ReadTimeout     time.Duration `yaml:"read_timeout" env-default:"3s"`
+	WriteTimeout    time.Duration `yaml:"write_timeout" env-default:"5s"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"5s"`
+}
 
 type Server struct {
 	srv *http.Server
-	cfg config.HTTPServer
+	cfg Config
 }
 
-func NewServer(cfg config.HTTPServer, handler http.Handler) *Server {
+func NewServer(cfg Config, handler http.Handler) *Server {
 	srv := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
 		Handler:      handler,

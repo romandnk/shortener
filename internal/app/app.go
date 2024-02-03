@@ -4,17 +4,20 @@ import (
 	"context"
 	"github.com/romandnk/shortener/config"
 	"github.com/romandnk/shortener/internal/constant"
-	"github.com/romandnk/shortener/internal/server/grpc"
-	"github.com/romandnk/shortener/internal/server/http"
+	"github.com/romandnk/shortener/internal/server/grpc/interceptor"
+	urlgrpc "github.com/romandnk/shortener/internal/server/grpc/url"
 	"github.com/romandnk/shortener/internal/server/http/middleware"
 	v1 "github.com/romandnk/shortener/internal/server/http/v1"
 	"github.com/romandnk/shortener/internal/service"
 	"github.com/romandnk/shortener/internal/storage"
 	"github.com/romandnk/shortener/pkg/generator"
+	"github.com/romandnk/shortener/pkg/grpcserver"
+	"github.com/romandnk/shortener/pkg/httpserver"
 	zaplogger "github.com/romandnk/shortener/pkg/logger/zap"
 	"github.com/romandnk/shortener/pkg/storage/postgres"
 	"github.com/romandnk/shortener/pkg/storage/redis"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os/signal"
@@ -108,11 +111,15 @@ func Run() {
 
 	// initializing handlers
 	HTTPHandler := v1.NewHandler(services, mw)
-	GRPCHandler := grpc.NewHandlerGRPC(services, logger)
 
 	// initializing servers
-	HTTPServer := http.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes())
-	GRPCServer := grpc.NewServerGRPC(GRPCHandler, logger, cfg.GRPCServer)
+	HTTPServer := httpserver.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes())
+	GRPCServer := grpcserver.NewServer(cfg.GRPCServer,
+		grpc.UnaryInterceptor(interceptor.LoggingInterceptor(logger)),
+	)
+
+	// register grpc
+	urlgrpc.Register(GRPCServer.Srv, services.URL)
 
 	go func() {
 		<-ctx.Done()

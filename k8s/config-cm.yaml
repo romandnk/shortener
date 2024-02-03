@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: ConfigMap
+metadata:
+  name: config-shortener
+  label:
+    app: url-shortener
+data:
+  config.yaml:  |
+    db_type: "postgres"
+    zap_logger:
+      test: true
+      level: "debug"
+      output_paths: [ "stdout" ]
+      error_output_paths: [ "stderr" ]
+    postgres:
+      ssl_mode: "disable"
+      max_conns: 5
+      min_conns: 3
+    http_server:
+      read_timeout: "5s"
+      write_timeout: "5s"
+      shutdown_timeout: "5s"
+    grpc_server:
+      max_connection_idle: "5m"
+      max_connection_age: "1h"
+      time: "1m"
+      timeout: "10s"

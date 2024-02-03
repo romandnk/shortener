@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/romandnk/shortener/config"
 )
 
 type PgxPool interface {
@@ -23,12 +22,23 @@ type PgxPool interface {
 	Ping(ctx context.Context) error
 }
 
+type Config struct {
+	Host     string `env:"POSTGRES_HOST"`
+	Port     int    `env:"POSTGRES_PORT"`
+	User     string `env:"POSTGRES_USER"`
+	Password string `env:"POSTGRES_PASSWORD"`
+	DBName   string `env:"POSTGRES_DB"`
+	SSLMode  string `yaml:"ssl_mode" env:"POSTGRES_SSLMODE"`
+	MaxConns int32  `yaml:"max_conns"`
+	MinConns int32  `yaml:"min_conns"`
+}
+
 type Postgres struct {
 	Builder squirrel.StatementBuilderType
 	Pool    PgxPool
 }
 
-func New(ctx context.Context, cfg config.Postgres) (*Postgres, error) {
+func New(ctx context.Context, cfg Config) (*Postgres, error) {
 	pg := Postgres{
 		Builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}

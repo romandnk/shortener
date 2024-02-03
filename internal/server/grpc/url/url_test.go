@@ -110,7 +110,7 @@ func TestHandlerGRPCCreateEvent(t *testing.T) {
 			defer lis.Close()
 
 			urlService := mock_service.NewMockURL(ctrl)
-			handler := URLHandler{
+			handler := urlHandler{
 				url: urlService,
 			}
 
@@ -211,7 +211,7 @@ func TestURLHandler_GetOriginalByAlias(t *testing.T) {
 			defer lis.Close()
 
 			urlService := mock_service.NewMockURL(ctrl)
-			handler := URLHandler{
+			handler := urlHandler{
 				url: urlService,
 			}
 
