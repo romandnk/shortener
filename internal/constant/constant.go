@@ -2,7 +2,7 @@ package constant
 
 import "time"
 
-// length of short url alias
+// AliasLength is a length of shorten url alias
 const AliasLength int = 10
 
 // db tables
