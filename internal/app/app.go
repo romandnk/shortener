@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"syscall"
 )
 
@@ -98,6 +99,10 @@ func Run() {
 		logger.Fatal("invalid db type", zap.String("db type", cfg.DBType))
 	}
 
+	// indicator that deps are connected
+	ok := atomic.Bool{}
+	ok.Store(true)
+
 	// initializing services
 	dep := service.Dependencies{
 		Generator: generator.NewGen(constant.AliasLength),
@@ -113,7 +118,7 @@ func Run() {
 	HTTPHandler := v1.NewHandler(services, mw)
 
 	// initializing servers
-	HTTPServer := httpserver.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes())
+	HTTPServer := httpserver.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes(&ok))
 	GRPCServer := grpcserver.NewServer(cfg.GRPCServer,
 		grpc.UnaryInterceptor(interceptor.LoggingInterceptor(logger)),
 	)

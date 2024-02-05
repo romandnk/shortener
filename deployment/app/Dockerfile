@@ -5,7 +5,12 @@ WORKDIR /app
 COPY . .
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/app ./cmd/app
+ARG BUILD_VERSION
+ARG VARIABLES_PATH
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/app  \
+    -ldflags "-X $VARIABLES_PATH.release=$BUILD_VERSION -X $VARIABLES_PATH.buildDate=$(date -u +%Y-%m-%dT%H:%M:%S) -X $VARIABLES_PATH.gitHash=$(git log --format="%h" -n 1)" \
+    ./cmd/app
 
 FROM scratch
 

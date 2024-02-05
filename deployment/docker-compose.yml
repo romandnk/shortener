@@ -50,6 +50,9 @@ services:
     build:
       context: ./..
       dockerfile: deployment/app/Dockerfile
+      args:
+        BUILD_VERSION: "develop"
+        VARIABLES_PATH: "github.com/romandnk/shortener/internal/server/http/v1/services"
     restart: unless-stopped
     depends_on:
       postgres:
