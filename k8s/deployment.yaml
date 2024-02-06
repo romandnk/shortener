@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: url-shortener-service
+  name: url-shortener-deployment
   namespace: develop
   labels:
     app: url-shortener
@@ -20,11 +20,20 @@ spec:
       labels:
         app: url-shortener
     spec:
+      terminationGracePeriodSeconds: 5
       containers:
-        - name: url-shortener-service
+        - name: url-shortener-app
           image: image # add my image
-          readinessProbe:
+          startupProbe:
             initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 5
+            httpGet:
+              path: /services/readiness
+              port: 8080
+          readinessProbe:
             periodSeconds: 5
             timeoutSeconds: 1
             successThreshold: 1
@@ -40,6 +49,7 @@ spec:
             httpGet:
               path: /services/liveness
               port: 8080
+            terminationGracePeriodSeconds: 3
           ports:
             - name: http-port
               containerPort: 8080
@@ -52,14 +62,15 @@ spec:
             - name: config
               mountPath: "/config"
               readOnly: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "500Mi"
+              cpu: "1"
 
       volumes:
         - name: config
           configMap:
             name: config-shortener
-            items:
-              - key: config.yaml
-                path: todo # ask Tim
-              - key: .env
-                path: todo # ask Tim
-
