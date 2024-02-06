@@ -1,53 +1,65 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
-  namespace: back
+  name: url-shortener-service
+  namespace: develop
   labels:
     app: url-shortener
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: url-shortener
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: url-shortener
     spec:
       containers:
-        - name: nginx
-          image: nginx:1.14.2
+        - name: url-shortener-service
+          image: image # add my image
           readinessProbe:
-            initialDelaySeconds: 100
+            initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 1
             successThreshold: 1
-            failureThreshold: 10
+            failureThreshold: 5
             httpGet:
-              path: /healthz # learn
-              port: 9091
+              path: /services/readiness
+              port: 8080
           livenessProbe:
-            initialDelaySeconds: 1
             periodSeconds: 5
             timeoutSeconds: 1
             successThreshold: 1
             failureThreshold: 1
             httpGet:
-              path: /healthz # learn
-              port: 9091
+              path: /services/liveness
+              port: 8080
           ports:
             - name: http-port
               containerPort: 8080
-            - name: metric-port
-              containerPort: 9091
             - name: grpc-port
               containerPort: 50051
+          envFrom:
+            - configMapRef:
+                name: config-shortener
           volumeMounts:
             - name: config
               mountPath: "/config"
               readOnly: true
-    volumes:
-      - name: config
-        configMap:
-          name: config-shortener
-          items:
-            - key: "config.yaml"
-              path: "config.yaml"
+
+      volumes:
+        - name: config
+          configMap:
+            name: config-shortener
+            items:
+              - key: config.yaml
+                path: todo # ask Tim
+              - key: .env
+                path: todo # ask Tim
 
