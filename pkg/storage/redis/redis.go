@@ -13,7 +13,13 @@ type Config struct {
 	Password string `env:"REDIS_PASSWORD"`
 }
 
-func New(ctx context.Context, cfg Config) (*redis.Client, error) {
+type Redis struct {
+	Client *redis.Client
+}
+
+func New(ctx context.Context, cfg Config) (*Redis, error) {
+	r := &Redis{}
+
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
 		Password: cfg.Password,
@@ -22,8 +28,14 @@ func New(ctx context.Context, cfg Config) (*redis.Client, error) {
 
 	ping := rdb.Ping(ctx)
 	if err := ping.Err(); err != nil {
-		return rdb, err
+		return r, err
 	}
 
-	return rdb, nil
+	r.Client = rdb
+
+	return r, nil
+}
+
+func (r *Redis) Close() error {
+	return r.Client.Close()
 }

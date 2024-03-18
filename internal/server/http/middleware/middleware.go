@@ -3,9 +3,12 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/romandnk/shortener/pkg/logger"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"time"
 )
+
+var Module = fx.Module("middleware", fx.Provide(New))
 
 type MW struct {
 	logger logger.Logger

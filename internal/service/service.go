@@ -8,7 +8,10 @@ import (
 	"github.com/romandnk/shortener/internal/storage"
 	"github.com/romandnk/shortener/pkg/generator"
 	"github.com/romandnk/shortener/pkg/logger"
+	"go.uber.org/fx"
 )
+
+var Module = fx.Module("services", fx.Provide(NewServices))
 
 type URL interface {
 	CreateURLAlias(ctx context.Context, original string) (string, error)
@@ -19,14 +22,8 @@ type Services struct {
 	URL URL
 }
 
-type Dependencies struct {
-	Generator generator.Generator
-	Repo      *storage.Storage
-	Logger    logger.Logger
-}
-
-func NewServices(dep Dependencies) *Services {
+func NewServices(generator generator.Generator, repo *storage.Storage, logger logger.Logger) *Services {
 	return &Services{
-		URL: urlservice.NewURLService(dep.Generator, dep.Repo.URL, dep.Logger),
+		URL: urlservice.NewURLService(generator, repo.URL, logger),
 	}
 }

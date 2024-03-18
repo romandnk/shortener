@@ -8,11 +8,15 @@ import (
 	zaplogger "github.com/romandnk/shortener/pkg/logger/zap"
 	"github.com/romandnk/shortener/pkg/storage/postgres"
 	"github.com/romandnk/shortener/pkg/storage/redis"
+	"go.uber.org/fx"
 )
+
+var Module = fx.Module("config", fx.Provide(NewConfig))
 
 const configPath string = "./config/config.yaml"
 
 type Config struct {
+	//fx.Out     `yaml:"-"`
 	ZapLogger  zaplogger.Config  `yaml:"zap_logger"`
 	Postgres   postgres.Config   `yaml:"postgres"`
 	Redis      redis.Config      `yaml:"redis"`
@@ -26,12 +30,12 @@ func NewConfig() (*Config, error) {
 
 	err := cleanenv.ReadConfig(configPath, &cfg)
 	if err != nil {
-		return nil, err
+		return &cfg, err
 	}
 
 	err = cleanenv.UpdateEnv(&cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error updating env: %w", err)
+		return &cfg, fmt.Errorf("error updating env: %w", err)
 	}
 
 	return &cfg, nil

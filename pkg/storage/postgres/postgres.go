@@ -74,3 +74,7 @@ func New(ctx context.Context, cfg Config) (*Postgres, error) {
 
 	return &pg, nil
 }
+
+func (p *Postgres) Close() {
+	p.Pool.Close()
+}

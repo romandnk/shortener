@@ -8,18 +8,19 @@ import (
 	"github.com/romandnk/shortener/internal/constant"
 	"github.com/romandnk/shortener/internal/entity"
 	storageerrors "github.com/romandnk/shortener/internal/storage/errors"
+	redisdb "github.com/romandnk/shortener/pkg/storage/redis"
 )
 
 type URLRepo struct {
-	client *redis.Client
+	*redisdb.Redis
 }
 
-func NewURLRepo(client *redis.Client) *URLRepo {
-	return &URLRepo{client: client}
+func NewURLRepo(client *redisdb.Redis) *URLRepo {
+	return &URLRepo{client}
 }
 
 func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
-	err := r.client.Watch(ctx, func(tx *redis.Tx) error {
+	err := r.Client.Watch(ctx, func(tx *redis.Tx) error {
 		originExists, err := tx.SetNX(ctx, url.Original, url.Alias, constant.ZeroTTL).Result()
 		if err != nil {
 			return fmt.Errorf("URLRepo.CreateURL - tx.SetNX - 1: %v", err)
@@ -49,7 +50,7 @@ func (r *URLRepo) CreateURL(ctx context.Context, url entity.URL) error {
 }
 
 func (r *URLRepo) GetOriginalByAlias(ctx context.Context, alias string) (string, error) {
-	original, err := r.client.Get(ctx, alias).Result()
+	original, err := r.Client.Get(ctx, alias).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return "", storageerrors.ErrURLAliasNotFound

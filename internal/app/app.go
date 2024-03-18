@@ -13,154 +13,205 @@ import (
 	"github.com/romandnk/shortener/pkg/generator"
 	"github.com/romandnk/shortener/pkg/grpcserver"
 	"github.com/romandnk/shortener/pkg/httpserver"
+	"github.com/romandnk/shortener/pkg/logger"
 	zaplogger "github.com/romandnk/shortener/pkg/logger/zap"
 	"github.com/romandnk/shortener/pkg/storage/postgres"
 	"github.com/romandnk/shortener/pkg/storage/redis"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os/signal"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"syscall"
 )
 
-//	@title			URL shortener project
-//	@version		1.0
-//	@description	Swagger API for Golang Project URL Shortener.
-//	@termsOfService	http://swagger.io/terms/
+func NewApp() fx.Option {
+	return fx.Options(
+		MutualContextModule(),
+		config.Module,
+		LoggerModule(),
+		StartCheckModule(),
+		PostgresModule(),
+		RedisModule(),
+		ShortURLGeneratorModule(),
+		storage.Module,
+		middleware.Module,
+		service.Module,
+		v1.Module,
+		HTTPServerModule(),
+		GRPCServerModule(),
 
-//	@contact.name	API [Roman] Support
-//	@license.name	romandnk
-//	@license.url	https://github.com/romandnk/shortener
-
-// @BasePath	/api/v1/
-
-func Run() {
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGHUP,
+		CheckInitializedModules(),
 	)
-	defer cancel()
+}
 
-	// initializing config
-	cfg, err := config.NewConfig()
-	if err != nil {
-		log.Fatalf("error reading config file: %s", err.Error())
-	}
-
-	// initializing zap logger
-	logger, err := zaplogger.NewLogger(cfg.ZapLogger)
-	if err != nil {
-		log.Fatalf("error initializing zap logger: %s", err.Error())
-	}
-
-	logger.Info("using zap logger")
-
-	// initializing storage
-	var st *storage.Storage
-	switch cfg.DBType {
-	case constant.POSTGRES:
-		pg, err := postgres.New(ctx, cfg.Postgres)
-		if err != nil {
-			logger.Fatal("error initializing postgres db", zap.Error(err))
-		}
-		defer pg.Pool.Close()
-		st, err = storage.NewStorage(pg)
-		if err != nil {
-			pg.Pool.Close()
-			logger.Fatal("error creating storage", zap.Error(err))
-		}
-
-		logger.Info("using postgres storage",
-			zap.String("host", cfg.Postgres.Host),
-			zap.Int("port", cfg.Postgres.Port),
-		)
-	case constant.REDIS:
-		r, err := redis.New(ctx, cfg.Redis)
-		if err != nil {
-			logger.Fatal("error initializing redis db", zap.Error(err))
-		}
-		defer r.Close()
-		st, err = storage.NewStorage(r)
-		if err != nil {
-			r.Close()
-			logger.Fatal("error creating storage", zap.Error(err))
-		}
-
-		logger.Info("using redis storage",
-			zap.String("host", cfg.Redis.Host),
-			zap.Int("port", cfg.Redis.Port),
-		)
-	default:
-		logger.Fatal("invalid db type", zap.String("db type", cfg.DBType))
-	}
-
-	// indicator that deps are connected
-	ok := atomic.Bool{}
-	ok.Store(true)
-
-	// initializing services
-	dep := service.Dependencies{
-		Generator: generator.NewGen(constant.AliasLength),
-		Repo:      st,
-		Logger:    logger,
-	}
-	services := service.NewServices(dep)
-
-	// initializing middlewares
-	mw := middleware.New(logger)
-
-	// initializing handlers
-	HTTPHandler := v1.NewHandler(services, mw)
-
-	// initializing servers
-	HTTPServer := httpserver.NewServer(cfg.HTTPServer, HTTPHandler.InitRoutes(&ok))
-	GRPCServer := grpcserver.NewServer(cfg.GRPCServer,
-		grpc.UnaryInterceptor(interceptor.LoggingInterceptor(logger)),
+func LoggerModule() fx.Option {
+	return fx.Module("logger",
+		fx.Provide(
+			fx.Annotate(
+				zaplogger.NewLogger,
+				fx.As(new(logger.Logger))),
+			func(cfg *config.Config) zaplogger.Config {
+				return cfg.ZapLogger
+			},
+		),
 	)
+}
 
-	// register grpc
-	urlgrpc.Register(GRPCServer.Srv, services.URL)
+func StartCheckModule() fx.Option {
+	return fx.Module("start with atomic",
+		fx.Provide(func() *atomic.Bool {
+			return &atomic.Bool{}
+		}),
+	)
+}
 
-	go func() {
-		<-ctx.Done()
+func PostgresModule() fx.Option {
+	return fx.Module("postgres",
+		fx.Provide(
+			func(cfg *config.Config) postgres.Config {
+				return cfg.Postgres
+			},
+			postgres.New,
+		),
+		fx.Invoke(func(lc fx.Lifecycle, pg *postgres.Postgres) {
+			lc.Append(fx.Hook{
+				OnStop: func(ctx context.Context) error {
+					pg.Close()
+					return nil
+				},
+			})
+		}),
+	)
+}
 
-		if err := HTTPServer.Stop(ctx); err != nil {
-			logger.Error("error stopping HTTP server",
-				zap.String("host", cfg.HTTPServer.Host),
-				zap.Int("port", cfg.HTTPServer.Port),
+func RedisModule() fx.Option {
+	return fx.Module("redis",
+		fx.Provide(
+			func(cfg *config.Config) redis.Config {
+				return cfg.Redis
+			},
+			redis.New,
+		),
+		fx.Invoke(func(lc fx.Lifecycle, rdb *redis.Redis) {
+			lc.Append(fx.Hook{
+				OnStop: func(ctx context.Context) error {
+					return rdb.Close()
+				},
+			})
+		}),
+	)
+}
+
+func MutualContextModule() fx.Option {
+	return fx.Module("context",
+		fx.Provide(func() (context.Context, context.CancelFunc) {
+			ctx, cancel := signal.NotifyContext(context.Background(),
+				syscall.SIGINT,
+				syscall.SIGTERM,
+				syscall.SIGHUP,
 			)
-		}
+			return ctx, cancel
+		}))
+}
 
-		GRPCServer.Stop()
+func ShortURLGeneratorModule() fx.Option {
+	return fx.Module("generator",
+		fx.Provide(
+			fx.Annotate(
+				generator.NewGen,
+				fx.As(new(generator.Generator)),
+			),
+			func() int {
+				return constant.AliasLength
+			},
+		),
+	)
+}
 
-		logger.Info("app is stopped")
-	}()
+func HTTPServerModule() fx.Option {
+	return fx.Module("http server",
+		fx.Provide(
+			func(cfg *config.Config) httpserver.Config {
+				return cfg.HTTPServer
+			},
+			httpserver.NewServer,
+		),
+		fx.Invoke(func(lc fx.Lifecycle, srv *httpserver.Server, cfg httpserver.Config, logger logger.Logger) {
+			lc.Append(fx.Hook{
+				OnStart: func(ctx context.Context) error {
+					go func() {
+						if err := srv.Start(); err != nil {
+							logger.Error("error starting HTTP server",
+								zap.String("address", net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))))
+						}
+					}()
+					return nil
+				},
+				OnStop: func(ctx context.Context) error {
+					return srv.Stop(ctx)
+				},
+			})
+		}),
+	)
+}
 
-	var wg sync.WaitGroup
+func GRPCServerModule() fx.Option {
+	return fx.Module("grpc server",
+		fx.Provide(
+			func(cfg *config.Config) grpcserver.Config {
+				return cfg.GRPCServer
+			},
+			func(logger logger.Logger) []grpc.ServerOption {
+				return []grpc.ServerOption{
+					grpc.UnaryInterceptor(interceptor.LoggingInterceptor(logger)),
+				}
+			},
+			grpcserver.NewServer,
+		),
+		fx.Invoke(
+			func(srv *grpcserver.Server, services *service.Services) {
+				urlgrpc.Register(srv.Srv, services.URL)
+			},
+			func(lc fx.Lifecycle, srv *grpcserver.Server, cfg grpcserver.Config, logger logger.Logger) {
+				lc.Append(fx.Hook{
+					OnStart: func(ctx context.Context) error {
+						go func() {
+							if err := srv.Start(); err != nil {
+								logger.Error("error starting GRPC server",
+									zap.String("address", net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))))
+							}
+						}()
+						return nil
+					},
+					OnStop: func(ctx context.Context) error {
+						srv.Stop()
+						return nil
+					},
+				})
+			}),
+	)
+}
 
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		logger.Info("http server is running...",
-			zap.String("address", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
-		if err := HTTPServer.Start(); err != nil {
-			logger.Error("error starting HTTP server",
-				zap.String("address", net.JoinHostPort(cfg.HTTPServer.Host, strconv.Itoa(cfg.HTTPServer.Port))))
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		logger.Info("grpc server is running...",
-			zap.String("address", net.JoinHostPort(cfg.GRPCServer.Host, strconv.Itoa(cfg.GRPCServer.Port))))
-		if err := GRPCServer.Start(); err != nil {
-			logger.Error("error starting GRPC server",
-				zap.String("address", net.JoinHostPort(cfg.GRPCServer.Host, strconv.Itoa(cfg.GRPCServer.Port))))
-		}
-	}()
-	wg.Wait()
+func CheckInitializedModules() fx.Option {
+	return fx.Module("check modules",
+		fx.Invoke(
+			func(cfg *config.Config) {},
+			func(logger logger.Logger) {},
+			func(logger logger.Logger) {},
+			func(ok *atomic.Bool, pg *postgres.Postgres) {
+				if pg.Pool != nil {
+					ok.Store(true)
+				}
+			},
+			func(storage *storage.Storage) {},
+			func(mw *middleware.MW) {},
+			func(service *service.Services) {},
+			func(handler *v1.Handler) {},
+			func(srv *httpserver.Server) {},
+			func(srv *grpcserver.Server) {},
+		),
+	)
 }

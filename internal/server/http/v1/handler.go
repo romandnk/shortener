@@ -9,7 +9,16 @@ import (
 	"github.com/romandnk/shortener/internal/service"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/fx"
+	"net/http"
 	"sync/atomic"
+)
+
+var Module = fx.Module("HTTPHandler",
+	fx.Provide(NewHandler),
+	fx.Provide(func(ok *atomic.Bool, handler *Handler) http.Handler {
+		return handler.InitRoutes(ok)
+	}),
 )
 
 type Handler struct {
@@ -48,5 +57,5 @@ func (h *Handler) InitRoutes(ok *atomic.Bool) *gin.Engine {
 		}
 	}
 
-	return router
+	return h.engine
 }
