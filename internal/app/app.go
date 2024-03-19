@@ -201,7 +201,6 @@ func CheckInitializedModules() fx.Option {
 		fx.Invoke(
 			func(cfg *config.Config) {},
 			func(logger logger.Logger) {},
-			func(logger logger.Logger) {},
 			func(ok *atomic.Bool, pg *postgres.Postgres) {
 				if pg.Pool != nil {
 					ok.Store(true)
