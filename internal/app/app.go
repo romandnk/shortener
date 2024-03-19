@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net"
+	"net/http"
 	"os/signal"
 	"strconv"
 	"sync/atomic"
@@ -209,6 +210,7 @@ func CheckInitializedModules() fx.Option {
 			func(storage *storage.Storage) {},
 			func(mw *middleware.MW) {},
 			func(service *service.Services) {},
+			func(h http.Handler) {},
 			func(srv *httpserver.Server) {},
 			func(srv *grpcserver.Server) {},
 		),
