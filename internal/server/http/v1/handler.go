@@ -15,10 +15,15 @@ import (
 )
 
 var Module = fx.Module("HTTPHandler",
-	fx.Provide(NewHandler),
-	fx.Provide(func(ok *atomic.Bool, handler *Handler) http.Handler {
-		return handler.InitRoutes(ok)
-	}),
+	fx.Provide(
+		fx.Annotate(
+			func(ok *atomic.Bool, services *service.Services, mw *middleware.MW) *gin.Engine {
+				h := NewHandler(services, mw)
+				return h.InitRoutes(ok)
+			},
+			fx.As(new(http.Handler)),
+		),
+	),
 )
 
 type Handler struct {

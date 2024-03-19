@@ -209,7 +209,6 @@ func CheckInitializedModules() fx.Option {
 			func(storage *storage.Storage) {},
 			func(mw *middleware.MW) {},
 			func(service *service.Services) {},
-			func(handler *v1.Handler) {},
 			func(srv *httpserver.Server) {},
 			func(srv *grpcserver.Server) {},
 		),
